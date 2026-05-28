@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register - Entrevoverse</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1 { color: #6c3fc5; }
+    input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+    .btn { background: #6c3fc5; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; }
+    nav a { margin-right: 15px; color: #6c3fc5; text-decoration: none; font-weight: bold; }
+    #message { padding: 10px; margin-top: 10px; border-radius: 5px; display: none; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Events</a>
+    <a href="register.html">Register</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+  <h1>Event Registration</h1>
+
+  <input type="text" id="name" placeholder="Your Name" />
+  <input type="email" id="email" placeholder="Your Email" />
+  <select id="event">
+    <option value="">-- Select Event --</option>
+  </select>
+  <button class="btn" onclick="register()">Register Now</button>
+  <div id="message"></div>
+
+  <script>
+    // Events load karo dropdown mein
+    fetch('/api/events')
+      .then(res => res.json())
+      .then(events => {
+        const select = document.getElementById('event');
+        events.forEach(e => {
+          select.innerHTML += `<option value="${e.id}">${e.title}</option>`;
+        });
+
+        // URL se event id aayi ho toh auto select karo
+        const params = new URLSearchParams(window.location.search);
+        if(params.get('id')) select.value = params.get('id');
+      });
+
+    function register() {
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const eventId = document.getElementById('event').value;
+
+      if(!name || !email || !eventId) {
+        alert('Sab fields fill karo!');
+        return;
+      }
+
+      fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, event: { id: parseInt(eventId) } })
+      })
+      .then(res => res.json())
+      .then(() => {
+        const msg = document.getElementById('message');
+        msg.style.display = 'block';
+        msg.style.background = '#d4edda';
+        msg.style.color = '#155724';
+        msg.innerText = '✅ Registration successful!';
+      });
+    }
+  </script>
+</body>
+</html>

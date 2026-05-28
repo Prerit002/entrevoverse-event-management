@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Entrevoverse</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; }
+    h1, h2 { color: #6c3fc5; }
+    input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+    .btn { background: #6c3fc5; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-red { background: #e74c3c; color: white; padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; }
+    nav a { margin-right: 15px; color: #6c3fc5; text-decoration: none; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #6c3fc5; color: white; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Events</a>
+    <a href="register.html">Register</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+
+  <h1>Admin Panel</h1>
+
+  <h2>Add New Event</h2>
+  <input type="text" id="title" placeholder="Event Title" />
+  <textarea id="description" placeholder="Event Description" rows="3"></textarea>
+  <input type="date" id="eventDate" />
+  <input type="text" id="location" placeholder="Location" />
+  <button class="btn" onclick="addEvent()">Add Event</button>
+
+  <h2>All Events</h2>
+  <div id="events-list"></div>
+
+  <h2>All Registrations</h2>
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Event</th><th>Registered At</th></tr>
+    </thead>
+    <tbody id="registrations-list"></tbody>
+  </table>
+
+  <script>
+    function loadEvents() {
+      fetch('/api/events')
+        .then(res => res.json())
+        .then(events => {
+          const container = document.getElementById('events-list');
+          container.innerHTML = '';
+          if(events.length === 0) {
+            container.innerHTML = '<p>No events yet.</p>';
+            return;
+          }
+          events.forEach(e => {
+            container.innerHTML += `
+              <div style="border:1px solid #ddd; padding:10px; margin:8px 0; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong>${e.title}</strong> — ${e.eventDate} — ${e.location}
+                </div>
+                <button class="btn-red" onclick="deleteEvent(${e.id})">Delete</button>
+              </div>`;
+          });
+        });
+    }
+
+    function loadRegistrations() {
+      fetch('/api/registrations')
+        .then(res => res.json())
+        .then(regs => {
+          const tbody = document.getElementById('registrations-list');
+          tbody.innerHTML = '';
+          regs.forEach(r => {
+            tbody.innerHTML += `
+              <tr>
+                <td>${r.name}</td>
+                <td>${r.email}</td>
+                <td>${r.event ? r.event.title : 'N/A'}</td>
+                <td>${r.registeredAt}</td>
+              </tr>`;
+          });
+        });
+    }
+
+    function addEvent() {
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const eventDate = document.getElementById('eventDate').value;
+      const location = document.getElementById('location').value;
+
+      if(!title || !eventDate || !location) {
+        alert('Title, date aur location zaroori hai!');
+        return;
+      }
+
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, eventDate, location })
+      })
+      .then(res => res.json())
+      .then(() => {
+        alert('Event add ho gaya!');
+        document.getElementById('title').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('eventDate').value = '';
+        document.getElementById('location').value = '';
+        loadEvents();
+      });
+    }
+
+    function deleteEvent(id) {
+      if(confirm('Delete karna chahte ho?')) {
+        fetch(`/api/events/${id}`, { method: 'DELETE' })
+          .then(() => loadEvents());
+      }
+    }
+
+    loadEvents();
+    loadRegistrations();
+  </script>
+</body>
+</html>
